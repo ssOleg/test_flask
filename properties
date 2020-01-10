@@ -1,0 +1,5 @@
+PROJECT=<your-project-id>
+GKE_NAME=<your-cluster-name>
+ZONE=<your-cluster-zone>
+TOKEN_FILE=<your-github-token-file>
+SECRET=<secret-defined-in-github-webhook>
