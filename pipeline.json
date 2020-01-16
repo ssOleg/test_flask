@@ -1,0 +1,171 @@
+{
+  "expectedArtifacts": [
+    {
+      "defaultArtifact": {
+        "artifactAccount": "my-github-artifact-account",
+        "id": "9ace6569-882a-4550-9bcf-0e34e471d6c4",
+        "name": "sample.yaml",
+        "reference": "https://api.github.com/repos/ssOleg/test_flask/contents/sample.yaml",
+        "type": "github/file",
+        "version": "master"
+      },
+      "displayName": "moody-otter-42",
+      "id": "75e0a977-9e00-43bc-899f-f0e891f36f91",
+      "matchArtifact": {
+        "artifactAccount": "my-github-artifact-account",
+        "id": "7b51d23e-1edc-4f04-ac7b-c800cbbac6b2",
+        "name": "sample.yaml",
+        "type": "github/file"
+      },
+      "useDefaultArtifact": true,
+      "usePriorArtifact": false
+    }
+  ],
+  "keepWaitingPipelines": false,
+  "lastModifiedBy": "anonymous",
+  "limitConcurrent": true,
+  "stages": [
+    {
+      "account": "gcb-ci-account",
+      "application": "test",
+      "buildDefinition": {
+        "images": [
+          "gcr.io/PROJECT/test-flask"
+        ],
+        "steps": [
+          {
+            "args": [
+              "clone",
+              "https://github.com/ssOleg/test_flask.git"
+            ],
+            "name": "gcr.io/cloud-builders/git"
+          },
+          {
+            "args": [
+              "build",
+              "-t",
+              "gcr.io/PROJECT/test-flask",
+              "test_flask"
+            ],
+            "name": "gcr.io/cloud-builders/docker"
+          },
+          {
+            "args": [
+              "run",
+              "-d",
+              "gcr.io/PROJECT/test-flask"
+            ],
+            "name": "gcr.io/cloud-builders/docker"
+          },
+          {
+            "args": [
+              "push",
+              "gcr.io/PROJECT/test-flask"
+            ],
+            "name": "gcr.io/cloud-builders/docker"
+          }
+        ]
+      },
+      "buildDefinitionSource": "text",
+      "name": "Google Cloud Build",
+      "refId": "1",
+      "requisiteStageRefIds": [],
+      "type": "googleCloudBuild"
+    },
+    {
+      "account": "spinnaker-account",
+      "cloudProvider": "kubernetes",
+      "manifests": [
+        {
+          "apiVersion": "extensions/v1beta1",
+          "kind": "Deployment",
+          "metadata": {
+            "name": "test-flask"
+          },
+          "spec": {
+            "replicas": 1,
+            "template": {
+              "metadata": {
+                "labels": {
+                  "app": "test-flask"
+                }
+              },
+              "spec": {
+                "containers": [
+                  {
+                    "image": "gcr.io/PROJECT/test-flask:latest",
+                    "name": "test-flask-pod",
+                    "ports": [
+                      {
+                        "containerPort": 5000
+                      }
+                    ]
+                  }
+                ],
+                "imagePullSecrets": [
+                  {
+                    "name": "regcred"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "apiVersion": "v1",
+          "kind": "Service",
+          "metadata": {
+            "name": "test-flask-services"
+          },
+          "spec": {
+            "ports": [
+              {
+                "port": 80,
+                "protocol": "TCP",
+                "targetPort": 5000
+              }
+            ],
+            "selector": {
+              "app": "test-flask"
+            },
+            "type": "LoadBalancer"
+          }
+        }
+      ],
+      "moniker": {
+        "app": "test"
+      },
+      "name": "Deploy (Manifest)",
+      "namespaceOverride": "",
+      "refId": "2",
+      "requisiteStageRefIds": [
+        "1"
+      ],
+      "skipExpressionEvaluation": false,
+      "source": "text",
+      "trafficManagement": {
+        "enabled": false,
+        "options": {
+          "enableTraffic": false,
+          "services": []
+        }
+      },
+      "type": "deployManifest"
+    }
+  ],
+  "triggers": [
+    {
+      "branch": "master",
+      "enabled": true,
+      "expectedArtifactIds": [
+        "75e0a977-9e00-43bc-899f-f0e891f36f91"
+      ],
+      "project": "test_flask",
+      "secret": "SECRET",
+      "slug": "test_flask",
+      "source": "github",
+      "type": "git"
+    }
+  ],
+  "updateTs": "1579098839979"
+}

@@ -1,0 +1,31 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: test-flask
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: test-flask
+    spec:
+      containers:
+        - image: 'gcr.io/PROJECT/test-flask:latest'
+          name: test-flask-pod
+          ports:
+            - containerPort: 5000
+      imagePullSecrets:
+        - name: regcred
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-flask-services
+spec:
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 5000
+  selector:
+    app: test-flask
+  type: LoadBalancer
